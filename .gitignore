@@ -1,20 +1,25 @@
-# artefak hasil kerja — jangan di-commit
-*.duckdb
-*.duckdb.wal
-logs/
-*.log
+﻿# Python
 __pycache__/
-*.pyc
-.ipynb_checkpoints/
-.DS_Store
-
-# kecuali fallback dari dosen
-!warehouse/fallback/*.duckdb
-
-# venv lokal
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.env
 .venv/
 venv/
-.env
 
-# kunci jawaban dosen — jangan pernah ikut ke repo mahasiswa
-_KUNCI_PENYUNTIKAN.md
+# DuckDB (jangan commit database!)
+*.duckdb
+*.duckdb.wal
+warehouse/*.duckdb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

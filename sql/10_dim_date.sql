@@ -1,5 +1,5 @@
 -- ============================================================
--- 10_dim_date.sql — DIBERIKAN LENGKAP. Ini bukan checkpoint, ini alat.
+-- 10_dim_date.sql - DIBERIKAN LENGKAP. Ini bukan checkpoint, ini alat.
 -- Konformed dimension: SEMUA fact di warehouse ini menunjuk ke sini.
 -- ============================================================
 
