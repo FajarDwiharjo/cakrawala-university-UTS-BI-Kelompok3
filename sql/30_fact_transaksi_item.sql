@@ -11,6 +11,10 @@
 --        (transaction_id) yang terjadi di satu outlet (outlet_id)
 --        pada satu hari kalender (tanggal_waktu::date).
 --
+--        Natural key baris: (transaction_id, item_id)
+--        — item_id adalah identifier per baris item dalam satu faktur;
+--          kombinasi keduanya unik di transaction_items.csv.
+--
 -- Aditivitas setiap measure:
 --   qty             : ADDITIVE   — boleh di-SUM lintas semua dimensi
 --                                  (total unit terjual per outlet, per produk, per bulan)
@@ -23,6 +27,13 @@
 -- Degenerate key:
 --   transaction_id  : tidak punya dimensi sendiri, tetap di fact table
 --   item_id         : identitas baris item, tidak punya dimensi sendiri
+--
+-- Dimensi yang TIDAK DIBANGUN:
+--   dim_customer    : customers.csv ada di repo, namun transaction_items.csv
+--                     tidak memiliki FK ke customer_id — analisis per pelanggan
+--                     tidak dapat dilakukan dari grain ini tanpa JOIN tambahan
+--                     ke transactions.csv yang memiliki customer_id.
+--                     Keputusan ini dicatat di docs/D7_scope_cut.md.
 -- ============================================================
 
 CREATE OR REPLACE TABLE fact_transaksi_item AS

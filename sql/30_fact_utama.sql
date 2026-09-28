@@ -11,9 +11,7 @@
 --   SEMI-ADDITIVE : boleh di-SUM di sebagian dimensi   (contoh: saldo stok, flag siaga per waktu)
 --   NON-ADDITIVE  : jangan di-SUM, pakai min/max/avg   (contoh: harga, suhu, persentase)
 
--- TODO: tulis DDL fact + JOIN ke setiap dimensi (satu JOIN per dimensi — star, bukan snowflake).
--- Kolom yang WAJIB ada:
---   * satu surrogate key per dimensi (<entitas>_sk), bukan ID bisnis
---   * ID bisnis yang tidak punya dimensi sendiri (nomor transaksi) tetap di fact, diberi label
---     "degenerate"
---   * measure dengan label aditivitas di komentar
+-- CATATAN: Untuk Kelompok 3 (T2 POS UMKM, slice k8), fact table utama
+-- sudah diimplementasikan di: 30_fact_transaksi_item.sql
+-- (grain: satu item produk per transaksi per outlet per tanggal)
+-- File ini tidak dipakai — digantikan oleh implementasi yang lebih spesifik di atas.
