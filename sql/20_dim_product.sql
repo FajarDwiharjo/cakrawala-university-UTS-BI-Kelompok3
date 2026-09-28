@@ -25,10 +25,11 @@ SELECT
     p.product_id,                        -- natural key (disimpan, bukan PK)
     p.nama_produk,
     p.kategori,
-    p.harga_satuan,
+    CAST(p.harga_satuan AS DECIMAL(15,2))   AS harga_satuan,
 
     -- SCD Type 2: valid_from = tanggal harga mulai berlaku
-    CAST(p.harga_berlaku_dari AS DATE)   AS valid_from,
+    -- COALESCE guard: jika harga_berlaku_dari NULL (data kotor), fallback ke awal periode data
+    COALESCE(CAST(p.harga_berlaku_dari AS DATE), DATE '2024-01-01')   AS valid_from,
 
     -- valid_to = 1 hari sebelum versi berikutnya (atau far-future untuk baris aktif)
     COALESCE(
@@ -51,8 +52,8 @@ SELECT
         ELSE FALSE
     END                                 AS is_current,
 
-    -- status aktif dari sumber (ya/tidak)
-    p.aktif
+    -- status aktif dari sumber (ya/tidak) → dinormalkan ke BOOLEAN
+    CASE WHEN lower(trim(p.aktif)) = 'ya' THEN TRUE ELSE FALSE END   AS is_aktif
 
 FROM read_csv_auto('data/raw/t2_umkm/products.csv', all_varchar=true) AS p
 
@@ -61,15 +62,15 @@ UNION ALL
 -- ── Anggota Unknown: transaksi tanpa product_id yang valid ─────────────────
 -- Profiling: 1 FK orphan di transaction_items → product_id tidak ada di products.csv
 SELECT
-    -1                  AS product_sk,
-    'PRD-UNKNOWN'       AS product_id,
-    'TIDAK DIKETAHUI'   AS nama_produk,
-    'TIDAK DIKETAHUI'   AS kategori,
-    0                   AS harga_satuan,
-    DATE '1900-01-01'   AS valid_from,
-    DATE '9999-12-31'   AS valid_to,
-    TRUE                AS is_current,
-    'tidak'             AS aktif;
+    -1                              AS product_sk,
+    'PRD-UNKNOWN'                   AS product_id,
+    'TIDAK DIKETAHUI'               AS nama_produk,
+    'TIDAK DIKETAHUI'               AS kategori,
+    CAST(0 AS DECIMAL(15,2))        AS harga_satuan,
+    DATE '1900-01-01'               AS valid_from,
+    DATE '9999-12-31'               AS valid_to,
+    TRUE                            AS is_current,
+    FALSE                           AS is_aktif;
 
 -- ============================================================
 -- GRAIN & DESAIN CATATAN:

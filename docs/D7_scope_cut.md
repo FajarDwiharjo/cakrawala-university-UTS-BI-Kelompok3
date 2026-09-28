@@ -9,10 +9,11 @@ Tim: ____________________  Topik / slice: ____________________  Tanggal: _______
 
 | # | Artefak | Ukuran selesai | Deadline |
 |---|---|---|---|
-| 1 | fact: ____________________ |  |  |
-| 2 | conformed dim: ____________________ |  |  |
-| 3 | metrik di kamus: _______ dari 3 |  |  |
-| 4 | dashboard: _______ tile |  |  |
+| 1 | dim: `dim_date` (conformed) — dimensi tanggal YYYYMMDD | 1.461 baris (2024–2027) + 1 unknown | 30 Sep 2026 |
+| 2 | dim: `dim_product` (SCD Type 2) — histori harga per produk | 120 produk, 9 varian harga, valid_from/valid_to/is_current | 30 Sep 2026 |
+| 3 | dim: `dim_outlet` (SCD Type 1) — master outlet A+B+C | 3 outlet + 1 unknown | 30 Sep 2026 |
+| 4 | dim: `dim_status_transaksi` (SCD Type 0) — kamus 5 status POS | 5 status + 1 unknown | 30 Sep 2026 |
+| 5 | grain: definisi grain `fact_transaksi_item` — satu item produk per transaksi per outlet per tanggal | Terdokumentasi di DDL + README.md | 30 Sep 2026 |
 
 ## TIDAK LAGI DIBANGUN (sebut namanya, jangan "kalau ada waktu")
 

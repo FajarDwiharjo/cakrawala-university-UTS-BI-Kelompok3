@@ -3,7 +3,6 @@
 -- Label SCD wajib: Type 0 (tidak berubah) | Type 1 (overwrite) | Type 2 (histori)
 -- ============================================================
 
--- TODO: tulis DDL dimensi kedua. Sertakan komentar tipe SCD + alasan satu baris.
--- Contoh T3: dim_slot(slot_sk, jam, nama_slot) — Type 0, jam tidak pernah berubah.
--- Contoh T2: dim_product(product_sk, product_id, nama, kategori, harga_satuan,
---                         valid_from, valid_to, is_current) — Type 2, karena harga berubah.
+-- CATATAN: Untuk Kelompok 3 (T2 POS UMKM, slice k8), dimensi kategori/kamus
+-- sudah diimplementasikan di: 20_dim_status_transaksi.sql (SCD Type 0, kamus statis)
+-- File ini tidak dipakai — digantikan oleh implementasi yang lebih spesifik di atas.

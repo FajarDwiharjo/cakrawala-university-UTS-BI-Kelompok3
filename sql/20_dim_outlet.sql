@@ -23,7 +23,8 @@ SELECT
     o.nama_outlet,
     o.kota,
     o.tipe,                                      -- outlet_pusat | outlet_transit | ...
-    o.aktif,                                     -- ya / tidak
+    -- aktif dinormalkan ke BOOLEAN (konsisten dengan dim_product.is_aktif)
+    CASE WHEN lower(trim(o.aktif)) = 'ya' THEN TRUE ELSE FALSE END   AS is_aktif,
     CAST(o.dibuka_sejak AS DATE)                 AS dibuka_sejak
 
 FROM read_csv_auto('data/raw/t2_umkm/outlets.csv', all_varchar=true) AS o
@@ -37,7 +38,7 @@ SELECT
     'TIDAK DIKETAHUI'   AS nama_outlet,
     'TIDAK DIKETAHUI'   AS kota,
     'TIDAK DIKETAHUI'   AS tipe,
-    'tidak'             AS aktif,
+    FALSE               AS is_aktif,
     DATE '1900-01-01'   AS dibuka_sejak;
 
 -- ============================================================
