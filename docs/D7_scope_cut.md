@@ -9,11 +9,12 @@ Tim: Kelompok 3 Topik / slice: K3T2 POS UMKM — Outlet A+B+C, 12 bulank8  Tangg
 
 | # | Artefak | Ukuran selesai | Deadline |
 |---|---|---|---|
-| 1 | dim: `dim_date` (conformed) — dimensi tanggal YYYYMMDD | 1.461 baris (2024–2027) + 1 unknown | 2 Okt 2026 |
-| 2 | dim: `dim_product` (SCD Type 2) — histori harga per produk | 120 produk, 9 varian harga, valid_from/valid_to/is_current | 2 Okt 2026 |
-| 3 | dim: `dim_outlet` (SCD Type 1) — master outlet A+B+C | 3 outlet + 1 unknown | 2 Okt 2026 |
-| 4 | dim: `dim_status_transaksi` (SCD Type 0) — kamus 5 status POS | 5 status + 1 unknown | 2 Okt 2026 |
-| 5 | grain: definisi grain `fact_transaksi_item` — satu item produk per transaksi per outlet per tanggal | Terdokumentasi di DDL + README.md | 2 Okt 2026 |
+| 1 | fact: `fact_transaksi_item` — satu item produk per transaksi per outlet per tanggal | Grain terdokumentasi di DDL; baris fact = item unik (transaction_id, item_id) setelah dedup; tiap measure berlabel aditivitas | 2 Sept 2026 |
+| 2 | dim: `dim_date` (conformed) — dimensi tanggal YYYYMMDD | 1.461 baris (2024–2027) + 1 unknown | 2 Sept 2026 |
+| 3 | dim: `dim_product` (SCD Type 2) — histori harga per produk | 120 produk, 9 varian harga, valid_from/valid_to/is_current | 2 Sept 2026 |
+| 4 | dim: `dim_outlet` (SCD Type 1) — master outlet A+B+C | 3 outlet + 1 unknown (OUT-D tutup, di luar slice) | 2 Sept 2026 |
+| 5 | dim: `dim_status_transaksi` (SCD Type 0) — kamus status POS | Status sesuai nilai nyata di data + 1 unknown | 2 Sept 2026 |
+| 6 | 3 kueri analitik `sql/40_analytics/q01..q03` — tren MoM (window/CTE), retur per triwulan, ukuran keranjang | Berjalan tanpa error di warehouse tim, jawaban 1 kalimat tertulis | 2 Sept 2026 |
 
 ## TIDAK LAGI DIBANGUN (sebut namanya, jangan "kalau ada waktu")
 
