@@ -38,82 +38,104 @@
 
 CREATE OR REPLACE TABLE fact_transaksi_item AS
 
+WITH items_dedup AS (
+    SELECT
+        transaction_id,
+        item_id,
+        product_id,
+        qty,
+        harga_satuan,
+        diskon
+    FROM read_csv_auto(
+        'data/raw/t2_umkm/transaction_items.csv',
+        all_varchar=true
+    )
+    GROUP BY
+        transaction_id,
+        item_id,
+        product_id,
+        qty,
+        harga_satuan,
+        diskon
+),
+
+transaction_check AS (
+    SELECT
+        transaction_id,
+        COUNT(DISTINCT outlet_id) AS outlet_count,
+        COUNT(DISTINCT tanggal_waktu) AS tanggal_count,
+        COUNT(DISTINCT status) AS status_count,
+        COUNT(DISTINCT total_bayar) AS total_bayar_count
+    FROM read_csv_auto(
+        'data/raw/t2_umkm/transactions.csv',
+        all_varchar=true
+    )
+    GROUP BY transaction_id
+),
+
+transactions_clean AS (
+    SELECT
+        t.transaction_id,
+        MIN(t.outlet_id) AS outlet_id,
+        MIN(t.tanggal_waktu) AS tanggal_waktu,
+        MIN(t.status) AS status,
+        MIN(t.total_bayar) AS total_bayar
+    FROM read_csv_auto(
+        'data/raw/t2_umkm/transactions.csv',
+        all_varchar=true
+    ) AS t
+    JOIN transaction_check AS c
+        ON t.transaction_id = c.transaction_id
+    WHERE c.outlet_count = 1
+      AND c.tanggal_count = 1
+      AND c.status_count = 1
+      AND c.total_bayar_count = 1
+    GROUP BY t.transaction_id
+)
+
 SELECT
-    -- ── Surrogate keys → FK ke setiap dimensi (star schema, bukan snowflake) ──
+    COALESCE(d.date_sk, -1) AS date_sk,
+    COALESCE(p.product_sk, -1) AS product_sk,
+    COALESCE(o.outlet_sk, -1) AS outlet_sk,
+    COALESCE(s.status_sk, -1) AS status_sk,
 
-    -- FK ke dim_date (date_sk = YYYYMMDD integer)
-    COALESCE(
-        d.date_sk,
-        -1
-    )                                               AS date_sk,
+    ti.transaction_id,
+    ti.item_id,
 
-    -- FK ke dim_product (Type 2: cocokkan tanggal transaksi ke versi harga yg berlaku)
-    COALESCE(
-        p.product_sk,
-        -1
-    )                                               AS product_sk,
+    CAST(ti.qty AS INTEGER) AS qty,
 
-    -- FK ke dim_outlet
-    COALESCE(
-        o.outlet_sk,
-        -1
-    )                                               AS outlet_sk,
+    CAST(ti.harga_satuan AS DECIMAL(15,2))
+        AS harga_satuan_aktual,
 
-    -- FK ke dim_status_transaksi
-    COALESCE(
-        s.status_sk,
-        -1
-    )                                               AS status_sk,
+    CAST(ti.diskon AS DECIMAL(15,2))
+        AS diskon,
 
-    -- ── Degenerate keys (tidak ada dimensi sendiri) ──────────────────────────
-    ti.transaction_id,          -- degenerate: nomor faktur transaksi
-    ti.item_id,                 -- degenerate: nomor baris item
-
-    -- ── Measures ─────────────────────────────────────────────────────────────
-
-    -- ADDITIVE: jumlah unit item (negatif = retur; profiling: 628 qty negatif)
-    CAST(ti.qty AS INTEGER)                          AS qty,
-
-    -- ADDITIVE: harga satuan yang dipakai saat transaksi (dari fact, bukan dari dim)
-    CAST(ti.harga_satuan AS DECIMAL(15,2))           AS harga_satuan_aktual,
-
-    -- ADDITIVE: potongan harga per item (diskon = 0 jika tidak ada)
-    CAST(ti.diskon AS DECIMAL(15,2))                 AS diskon,
-
-    -- ADDITIVE: subtotal rupiah = qty * harga_satuan - diskon
-    --           (bisa negatif untuk baris retur)
     CAST(ti.qty AS INTEGER)
         * CAST(ti.harga_satuan AS DECIMAL(15,2))
-        - CAST(ti.diskon AS DECIMAL(15,2))           AS subtotal_rupiah,
+        - CAST(ti.diskon AS DECIMAL(15,2))
+        AS subtotal_rupiah,
 
-    -- SEMI-ADDITIVE: total_bayar adalah nilai header transaksi
-    --               JANGAN di-SUM kalau dimensi analisis adalah per item
-    --               (akan double-count bila satu transaksi punya banyak item)
-    CAST(t.total_bayar AS DECIMAL(15,2))             AS total_bayar_trx
+    CAST(t.total_bayar AS DECIMAL(15,2))
+        AS total_bayar_trx
 
-FROM read_csv_auto('data/raw/t2_umkm/transaction_items.csv', all_varchar=true) AS ti
+FROM items_dedup AS ti
 
--- JOIN ke transactions (header transaksi → outlet, status, tanggal, total bayar)
-JOIN read_csv_auto('data/raw/t2_umkm/transactions.csv', all_varchar=true) AS t
+JOIN transactions_clean AS t
     ON ti.transaction_id = t.transaction_id
 
--- JOIN ke dim_date (konform dimensi tanggal)
 LEFT JOIN dim_date AS d
     ON d.full_date = CAST(t.tanggal_waktu AS DATE)
 
--- JOIN ke dim_product (Type 2: cocokkan versi harga pada tanggal transaksi)
 LEFT JOIN dim_product AS p
-    ON  p.product_id = ti.product_id
-    AND CAST(t.tanggal_waktu AS DATE) >= p.valid_from
-    AND CAST(t.tanggal_waktu AS DATE) <= p.valid_to
+    ON p.product_id = ti.product_id
+   AND CAST(t.tanggal_waktu AS DATE)
+       BETWEEN p.valid_from AND p.valid_to
 
--- JOIN ke dim_outlet (Type 1: selalu versi terkini)
 LEFT JOIN dim_outlet AS o
     ON o.outlet_id = t.outlet_id
 
--- JOIN ke dim_status_transaksi (Type 0: kamus statis)
 LEFT JOIN dim_status_transaksi AS s
-    ON s.status_code = t.status;
+    ON s.status_code = UPPER(TRIM(t.status));
 
 -- ============================================================
 -- CATATAN DESAIN:
@@ -132,6 +154,7 @@ LEFT JOIN dim_status_transaksi AS s
 --   hanya di level transaksi.
 --
 -- Duplikat transaction_id (profiling: 219 duplikat):
---   Duplikat di transactions.csv akan menyebabkan multiple JOIN ke fact.
---   Test kualitas wajib menangkap ini (lihat tests/test_definitions.yml).
+--   Duplicate header yang identik diringkas menjadi satu baris.
+--   transaction_id dengan header yang berbeda tidak digunakan dalam fact
+--   agar tidak menyebabkan multiple JOIN dan menggandakan baris fact.
 -- ============================================================
