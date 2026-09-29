@@ -11,11 +11,8 @@
 -- Placeholder di bawah ini SENGAJA bertanda TODO supaya loader menolak jalan sampai kamu isi.
 -- ============================================================
 
--- TODO: salin/tulis DDL dimensi + fact kamu di sql/20_*.sql dan sql/30_*.sql,
---       lalu satukan di sini dalam urutan yang benar. Contoh bentuk:
---
--- SOURCE sql/10_dim_date.sql;
--- SOURCE sql/20_dim_entitas_utama.sql;
--- SOURCE sql/20_dim_kategori.sql;
--- SOURCE sql/20_dim_referensi.sql;
--- SOURCE sql/30_fact_utama.sql;
+SOURCE sql/10_dim_date.sql;
+SOURCE sql/20_dim_product.sql;
+SOURCE sql/20_dim_outlet.sql;
+SOURCE sql/20_dim_status_transaksi.sql;
+SOURCE sql/30_fact_transaksi_item.sql;
