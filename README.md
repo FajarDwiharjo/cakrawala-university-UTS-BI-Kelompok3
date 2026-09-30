@@ -1,66 +1,153 @@
-# bis-cakrawala-starter — Business Intelligence Systems (SDA2161)
+# Data Warehouse POS UMKM Multi-Outlet — Kelompok 3
 
-Repo template untuk 9 tim. Satu repo per tim (`Use this template`), semua artefak dikerjakan **di
-dalam sesi** dan dibuktikan lewat commit bertanggal sebelum 20:00.
+> **Business Intelligence Systems (SDA2161)** — Universiti / Universitas Cakrawala  
+> **Topik Project**: T2 — POS UMKM Multi-Outlet  
+> **Slice Scope**: `k8` (Outlet A + B + C, 12 Bulan / Periode 2025)  
 
-## Setup 5 menit
+---
 
-```bash
-pip install -r requirements.txt
-python -m pipeline.profile --topic t3 --slice k1      # D1: profil data sebelum transformasi
-python -m pipeline.load    --topic t3 --slice k1 --twice   # D3: load 2x, cek row count
-python tests/run_tests.py  --topic t3                 # D4: 6 quality test, PASS/FAIL + severity
-python checkpoint.py verify --sesi 8                  # DoD UTS (design checkpoint)
-```
+## 👥 Informasi Tim & Deliverable UTS
 
-Semua perintah **offline** — data seed sudah ada di `data/raw/`, tidak ada unduhan saat lab.
+* **Kelompok**: Kelompok 3
+* **Ketua Tim**: Sisilia Fransisca
+* **Topik Target**: T2 POS UMKM (`data/raw/t2_umkm/`)
+* **Slice Datasets**: `k8` (Outlet A, B, C — 12 Bulan Kalender)
+* **Status DoD Checkpoint**: **100% PASS** (Sesi 4, Sesi 5, & Sesi 8 Design Checkpoint)
 
-## Tiga topik (dataset dari dosen, bukan pilihan sendiri)
+---
 
-| Topik | Folder | Slice |
-|---|---|---|
-| **T1** Kampus: Presensi & Kelulusan | `data/raw/t1_kampus/` | `--slice k4` (angkatan 2024) · `k5` (2023) · `k7` (2022) |
-| **T2** POS UMKM Multi-Outlet | `data/raw/t2_umkm/` | `--slice k8` (outlet A+B+C, 12 bulan) · `k9` (outlet A, 6 bulan, scope −20%) |
-| **T3** Cuaca Ekstrem per Desa (BMKG) | `data/raw/t3_publik/<slice>/` | `--slice k1` Kota Bogor · `k2` Kota Semarang · `k3` Kota Makassar · `k6` Kota Denpasar |
+## 📐 Arsitektur Data Warehouse & Star Schema
 
-## Struktur
+Sistem Data Warehouse dirancang menggunakan arsitektur **Star Schema** yang difokuskan pada granularitas transaksi item terkecil (*item level grain*) untuk fleksibilitas analisis bauran produk dan omzet outlet.
 
 ```
-├── data/raw/            seed (jangan diubah; baca saja)
+       +--------------------+          +-------------------------+
+       |     dim_outlet     |          |       dim_date          |
+       +--------------------+          +-------------------------+
+       | outlet_sk (PK)     |          | date_sk (PK)            |
+       | outlet_id (NK)     |          | full_date               |
+       | nama_outlet, kota  |          | tahun, triwulan, bulan  |
+       +---------+----------+          +------------+------------+
+                 |                                  |
+                 |      +---------------------+     |
+                 +----->| fact_transaksi_item |<----+
+                        +---------------------+
+                 +----->| date_sk (FK)        |<----+
+                 |      | product_sk (FK)     |     |
+                 |      | outlet_sk (FK)      |     |
+                 |      | status_sk (FK)      |     |
+                 |      | transaction_id      |     |
+                 |      | qty (ADDITIVE)      |     |
+                 |      | subtotal_rupiah     |     |
+                 |      | diskon (ADDITIVE)   |     |
+                 |      | total_bayar_trx     |     |
+                 |      +---------------------+     |
+                 |                                  |
+       +---------+----------+          +------------+------------+
+       |    dim_product     |          |   dim_status_transaksi  |
+       +--------------------+          +-------------------------+
+       | product_sk (PK)    |          | status_sk (PK)          |
+       | product_id (NK)    |          | status_code (NK)        |
+       | valid_from, valid_to|          | label_indonesia         |
+       | is_current (SCD 2) |          | kategori_final          |
+       +--------------------+          +-------------------------+
+```
+
+### 1. Fact Table Utama
+* **`fact_transaksi_item`** ([sql/30_fact_transaksi_item.sql](file:///D:/UTS_BI_Kel3/sql/30_fact_transaksi_item.sql))
+  * **Grain**: 1 baris per item produk per transaksi per outlet per tanggal.
+  * **Natural Key**: `(transaction_id, item_id)`
+  * **Measures**:
+    * `qty`: **ADDITIVE** (Total unit barang terjual/direset).
+    * `subtotal_rupiah`: **ADDITIVE** (Nilai penjualan item setelah diskon).
+    * `diskon`: **ADDITIVE** (Nilai potongan harga per item).
+    * `total_bayar_trx`: **SEMI-ADDITIVE** (Header total faktur dari POS).
+
+### 2. Dimension Tables
+1. **`dim_date`** (Conformed Dimension - SCD Type 0)
+   * Kunci `date_sk` format `YYYYMMDD` (2024-01-01 s.d. 2027-12-31 + Unknown `-1`).
+2. **`dim_product`** (SCD Type 2 - Histori Perubahan Harga)
+   * Menyimpan histori harga produk dengan atribut `valid_from`, `valid_to`, `is_current`. Menampung anggota unknown (`product_sk = -1`) untuk mengani FK orphan dari profiling.
+3. **`dim_outlet`** (SCD Type 1 - Master Outlet)
+   * Master outlet aktif Slice `k8` (Outlet A, B, C). Outlet D dikecualikan karena permanen tutup.
+4. **`dim_status_transaksi`** (SCD Type 0 - Kamus Status POS)
+   * Mengkategorikan status POS (`PAID`, `PENDING`, `CANCELLED`, `REFUNDED`, `PARTIAL`) dengan flag `kategori_final` dan `berdampak_pendapatan`.
+
+---
+
+## 🎯 Batas Lingkup Capstone (Scope Cut - D7)
+
+Berdasarkan formulir persetujuan batas lingkup ([docs/D7_scope_cut.md](file:///D:/UTS_BI_Kel3/docs/D7_scope_cut.md)):
+
+### ✅ AKAN DIBANGUN
+1. **Fact Table**: `fact_transaksi_item` (dedup 219 transaksi duplikat).
+2. **4 Tabel Dimensi**: `dim_date`, `dim_product` (SCD 2), `dim_outlet` (SCD 1), `dim_status_transaksi` (SCD 0).
+3. **3 Query Analitik**: Ukuran keranjang (`q01`), Pertumbuhan MoM (`q02`), Rasio Retur (`q03`).
+4. **Kamus Metrik & Query Metrik**: Omzet Bersih Bulanan, Pertumbuhan MoM, Rasio Retur Triwulanan.
+5. **Data Quality Tests**: 6 test kualitas data dengan severity & expected result.
+6. **Pipeline Load Idempoten**: `sql/load.sql` dengan strategi `CREATE OR REPLACE TABLE`.
+
+### 🚫 TIDAK LAGI DIBANGUN (Scope Cut)
+1. **`dim_customer`**: 25% transaksi anonim di POS & grain fact adalah level item.
+2. **Analisis Pelanggan Berulang (RFM / Retention)**: Kunci pelanggan tidak dibawa ke fact item.
+3. **Tabel `dim_kategori` Terpisah**: Kategori didenormalisasi langsung pada `dim_product`.
+4. **Data Historis Outlet D**: Permanen tutup & di luar cakupan slice `k8`.
+
+---
+
+## 🧪 Kualitas Data & Guard Tests (D4)
+
+Pengujian kualitas data diatur dalam [tests/test_definitions.yml](file:///D:/UTS_BI_Kel3/tests/test_definitions.yml):
+
+| Test Name | Severity | Expected | Masalah Data yang Ditangkap |
+|---|---|---|---|
+| `transaction_id_duplikat` | **blocking** | `fail` | 219 transaksi duplikat di POS yang dapat menggandakan omzet. |
+| `item_fk_orphan` | **blocking** | `fail` | 1 baris item transaksi tanpa `product_id` di master produk. |
+| `timestamp_utc_tanpa_zona` | **warning** | `fail` | 2.389 timestamp UTC tanpa tanda zona waktu. |
+| `transaksi_tanpa_item` | **warning** | `fail` | 158 header transaksi tanpa rincian baris item. |
+| `qty_negatif_bukan_refund` | **warning** | `fail` | 621 baris `qty < 0` yang tercatat pada status selain REFUND. |
+| `harga_satuan_tidak_positif` | **blocking** | `pass` | 0 baris (memastikan tidak ada harga nol/negatif). |
+
+---
+
+## 📂 Struktur Direktori Repository
+
+```
+├── data/raw/t2_umkm/       # Seed CSV dataset T2 POS UMKM (customers, outlets, products, transactions, items)
+├── docs/                   # Dokumen perancangan (kamus_metrik.md, D7_scope_cut.md, Batasan_desain.md, profile_t2_k8.md)
+├── pipeline/               # Python script pipeline (load.py, profile.py, config.py, DESIGN_load.md)
 ├── sql/
-│   ├── 00_profiling.sql        DIBERIKAN — 6 query profil
-│   ├── 10_dim_date.sql         DIBERIKAN — generator dimensi tanggal
-│   ├── 20_dim_*.sql            TUGAS tim (D2) — DDL dimensi
-│   ├── 30_fact_*.sql           TUGAS tim (D2) — DDL fact
-│   ├── 40_analytics/q0N.sql    TUGAS tim (D5 + UTS item 4)
-│   ├── 50_metrics/*.sql        TUGAS tim (D6) — satu berkas per metrik
-│   └── load.sql                URUTAN EKSEKUSI tim (D3) — loader menolak jalan selama masih TODO
-├── pipeline/
-│   ├── profile.py       D1 + UTS item 3 (angka untuk test)
-│   └── load.py          D3 — idempoten, `--twice`
-├── tests/
-│   ├── test_definitions.yml    TUGAS tim (D4 + UTS item 3)
-│   └── run_tests.py            eksekutor, cetak PASS/FAIL + exit code
-├── checkpoint.py        daftar cek DoD per sesi (design & build)
-├── docs/                D0, D6, D7, D12 — template terisi contoh
-└── warehouse/           hasil kerja: <topik>_<slice>.duckdb + fallback/
+│   ├── 10_dim_date.sql            # Conformed date dimension generator
+│   ├── 20_dim_product.sql         # DDL Dimensi Produk (SCD Type 2)
+│   ├── 20_dim_outlet.sql          # DDL Dimensi Outlet (SCD Type 1)
+│   ├── 20_dim_status_transaksi.sql # DDL Dimensi Status Transaksi (SCD Type 0)
+│   ├── 30_fact_transaksi_item.sql # DDL Fact Table Utama (Item Grain)
+│   ├── 40_analytics/              # Query analitik (q01_contoh.sql, q02.sql, q03.sql)
+│   ├── 50_metrics/                # Metrik bisnis (omzet_bersih_bulanan, m02_pertumbuhan_mom, m03_rasio_retur)
+│   └── load.sql                   # Skrip eksekusi idempoten utama untuk DuckDB
+├── tests/                         # Pengujian Kualitas Data (test_definitions.yml, run_tests.py)
+├── checkpoint.py                  # Skrip verifikasi DoD checkpoint otomatis
+└── warehouse/                     # Output DuckDB Warehouse (t2_k8.duckdb + fallback/)
 ```
 
-## Aturan yang dinilai
+---
 
-- **Idempotensi adalah syarat, bukan bonus.** `--twice` harus mencetak row count yang sama. Kalau tim mau membuktikan bahwa `INSERT` polos menggandakan baris, jalankan `--strategy insert_only` — itu contoh yang sengaja salah.
-- **Test wajib punya severity.** `blocking` menghentikan load; `warning` hanya memberi tahu. Test tanpa severity diabaikan.
-- **`WHERE 1=1` bukan test.** Test harus gagal ketika datanya salah, bukan ketika tabel kosong.
-- **Desain dulu (UTS), bangun kemudian (UAS).** `checkpoint.py verify --sesi 8` untuk desain; `--sesi 4|5` untuk artefak build.
+## ⚡ Cara Menjalankan & Verifikasi Project
 
-## Jalur penyelamat
+### 1. Eksekusi Load Warehouse (Idempoten)
+Jalankan proses load warehouse 2 kali (`--twice`) untuk membuktikan idempotensi skrip:
+```bash
+python -m pipeline.load --topic t2 --slice k8 --twice
+```
 
-`warehouse/fallback/<topik>_<slice>.duckdb` adalah warehouse yang **sudah jadi** untuk topikmu —
-dipakai **hanya** kalau pipeline tim jebol di tengah sesi dan kamu butuh lanjut ke Sesi 9–10.
-Catatan penting:
+### 2. Jalankan Data Quality Tests
+Jalankan pengujian data kualitas berbasis definisi YAML:
+```bash
+python tests/run_tests.py --topic t2
+```
 
-- **Tidak ada berkas `.sql` acuan di repo ini.** SQL lengkapnya tidak dibagikan; yang ada hanya
-  hasil jadinya. Kalau kamu memakai fallback, itu menggantikan artefak D3-mu — katakan terus terang
-  ke dosen, jangan mengaku sebagai hasil tim.
-- Dosen menanyakan bagian mana pun dari artefak yang kamu kumpulkan. Yang tidak bisa dijelaskan
-  bernilai 0 (RPS butir 5), dan fallback ini tidak bisa dijelaskan sebagai kerja tim.
+### 3. Verifikasi DoD Checkpoint Sesi 8 / UTS
+Jalankan checkpoint verifikasi DoD untuk memastikan kelengkapan perancangan:
+```bash
+python checkpoint.py verify --sesi 8 --topic t2
+```
