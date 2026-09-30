@@ -22,6 +22,8 @@ Tim: Kelompok 3 | Topik / slice: K3T2 POS UMKM — Outlet A+B+C, 12 bulan (slice
 
 ## TIDAK LAGI DIBANGUN (sebut namanya, jangan "kalau ada waktu")
 
+| # | Yang dicabut | Alasan |
+|---|---|---|
 | 1 | Dimensi `dim_customer` | Sekitar 25% transaksi anonim (tanpa customer_id), dan grain fact adalah item transaksi; kelompok memfokuskan star schema pada 1 fact + 1 conformed dimension per batasan RPS butir 8. |
 | 2 | Analisis pelanggan berulang (repeat purchase / RFM) | Karena `dim_customer` dan kunci `customer_sk` tidak dibawa ke `fact_transaksi_item`, pertanyaan bisnis mengenai retensi pelanggan sengaja dipotong (terdokumentasi di `docs/Batasan_desain.md`). |
 | 3 | Tabel dimensi `dim_kategori` terpisah | Kategori produk didenormalisasi langsung menjadi kolom deskriptif di `dim_product` untuk menghindari kompleksitas snowflake schema yang tidak diperlukan. |
