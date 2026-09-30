@@ -34,9 +34,11 @@ SELECT
     -- valid_to = 1 hari sebelum versi berikutnya (atau far-future untuk baris aktif)
     COALESCE(
         CAST(
-            lead(p.harga_berlaku_dari) OVER (
-                PARTITION BY p.product_id
-                ORDER BY p.harga_berlaku_dari
+            CAST(
+                lead(p.harga_berlaku_dari) OVER (
+                    PARTITION BY p.product_id
+                    ORDER BY p.harga_berlaku_dari
+                ) AS DATE
             ) - INTERVAL 1 DAY
             AS DATE
         ),
