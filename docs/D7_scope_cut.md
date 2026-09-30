@@ -3,7 +3,7 @@
 > Diisi tim **sebelum** menghadap dosen. Dosen hanya mencoret dan tanda tangan.
 > Form ini yang jadi acuan rubrik di Sesi 15–16: yang kamu potong tidak dihitung sebagai kekurangan.
 
-Tim: Kelompok 3 Topik / slice: K3T2 POS UMKM — Outlet A+B+C, 12 bulank8  Tanggal: 28 Sept 2026
+Tim: Kelompok 3 &nbsp;&nbsp; Topik / slice: K3T2 POS UMKM — Outlet A+B+C, 12 bulan (k8) &nbsp;&nbsp; Tanggal: 28 Sept 2026
 
 ## AKAN DIBANGUN (maksimal 1 fact table + 1 conformed dimension per RPS butir 8)
 
@@ -20,12 +20,12 @@ Tim: Kelompok 3 Topik / slice: K3T2 POS UMKM — Outlet A+B+C, 12 bulank8  Tangg
 
 | # | Yang dicabut | Alasan |
 |---|---|---|
-| 1 |  |  |
-| 2 |  |  |
+| 1 | `dim_customer` — dimensi pelanggan dari customers.csv | `transaction_items.csv` tidak punya FK ke `customer_id`; 25% transaksi anonim; membangun dim_customer tidak mengubah grain fact dan tidak bisa disambungkan tanpa mengubah desain fact. Analisis pelanggan dikecualikan dari scope. |
+| 2 | `dim_kategori` sebagai dimensi mandiri | Kolom `kategori` sudah ada di `dim_product`; membuat tabel dimensi terpisah tidak menambah nilai analitik dan hanya menambah jumlah JOIN tanpa manfaat signifikan. |
 
 ## Tanda tangan
 
 | Tim | Dosen |
 |---|---|
-|  |  |
+| Kelompok 3 — Sisilia Fransisca, Navrosjo, Zainuddin, Fajar Dwi Harjo | &nbsp; |
 | [tanda tangan] | [tanda tangan] |
