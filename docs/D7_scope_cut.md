@@ -20,12 +20,11 @@ Tim: Kelompok 3 &nbsp;&nbsp; Topik / slice: K3T2 POS UMKM — Outlet A+B+C, 12 b
 
 | # | Yang dicabut | Alasan |
 |---|---|---|
-| 1 | `dim_customer` — dimensi pelanggan dari customers.csv | `transaction_items.csv` tidak punya FK ke `customer_id`; 25% transaksi anonim; membangun dim_customer tidak mengubah grain fact dan tidak bisa disambungkan tanpa mengubah desain fact. Analisis pelanggan dikecualikan dari scope. |
-| 2 | `dim_kategori` sebagai dimensi mandiri | Kolom `kategori` sudah ada di `dim_product`; membuat tabel dimensi terpisah tidak menambah nilai analitik dan hanya menambah jumlah JOIN tanpa manfaat signifikan. |
+| 1 |  |  |
+| 2 |  |  |
 
 ## Tanda tangan
 
 | Tim | Dosen |
 |---|---|
-| Kelompok 3 — Sisilia Fransisca, Navrosjo, Zainuddin, Fajar Dwi Harjo | &nbsp; |
-| [tanda tangan] | [tanda tangan] |
+|  |  |
