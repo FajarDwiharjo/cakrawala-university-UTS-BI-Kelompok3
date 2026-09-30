@@ -3,6 +3,6 @@
 -- Sering terlupakan, dan justru tempat paling banyak kasus "Unknown".
 -- ============================================================
 
--- TODO: tulis DDL dimensi ketiga.
--- Contoh T3: dim_cuaca(cuaca_sk, kode_weather, deskripsi, indikasi_hujan).
---   Perhatikan: kode 0 dan 1 dua-duanya berdeskripsi 'Cerah' → deskripsi TIDAK BOLEH jadi kunci.
+-- CATATAN: Untuk Kelompok 3 (T2 POS UMKM, slice k8), dimensi referensi/geografi
+-- sudah diimplementasikan di: 20_dim_outlet.sql (SCD Type 1, master outlet)
+-- File ini tidak dipakai — digantikan oleh implementasi yang lebih spesifik di atas.

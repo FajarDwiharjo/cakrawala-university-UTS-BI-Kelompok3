@@ -8,15 +8,6 @@
 --   * Type 2         : valid_from, valid_to, is_current
 -- ============================================================
 
--- TODO: buat dimensi entitas utama untuk topikmu.
--- Contoh bentuk (T3 — ganti sesuai topikmu):
---
--- CREATE OR REPLACE TABLE dim_wilayah AS
--- SELECT row_number() OVER (ORDER BY kode) AS wilayah_sk,   -- surrogate key
---        kode AS natural_key,                               -- kunci bisnis dari sumber
---        desa, kecamatan, kabkot, provinsi,
---        DATE '2026-01-01' AS valid_from,                   -- Type 2
---        DATE '9999-12-31' AS valid_to,
---        TRUE AS is_current
--- FROM ...
--- UNION ALL SELECT -1, 'UNKNOWN', ... ;                      -- anggota Unknown selalu ada
+-- CATATAN: Untuk Kelompok 3 (T2 POS UMKM, slice k8), dimensi entitas utama
+-- sudah diimplementasikan di: 20_dim_product.sql (SCD Type 2, harga_berlaku_dari)
+-- File ini tidak dipakai — digantikan oleh implementasi yang lebih spesifik di atas.
