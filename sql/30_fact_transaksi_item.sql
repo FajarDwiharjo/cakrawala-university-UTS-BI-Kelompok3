@@ -12,7 +12,7 @@
 --        pada satu hari kalender (tanggal_waktu::date).
 --
 --        Natural key baris: (transaction_id, item_id)
---        — item_id adalah identifier per baris item dalam satu faktur;
+--        — item_id adalah identifier per baris item dalam satu faktur
 --          kombinasi keduanya unik di transaction_items.csv.
 --
 -- Aditivitas setiap measure:
@@ -20,7 +20,7 @@
 --                                  (total unit terjual per outlet, per produk, per bulan)
 --   subtotal_rupiah : ADDITIVE   — boleh di-SUM (qty * harga_satuan - diskon)
 --   diskon          : ADDITIVE   — boleh di-SUM (total potongan harga)
---   total_bayar_trx : SEMI-ADDITIVE — total bayar dari header transaksi;
+--   total_bayar_trx : SEMI-ADDITIVE — total bayar dari header transaksi
 --                                  JANGAN di-SUM kalau JOIN ke item karena
 --                                  akan double-count per baris item
 --

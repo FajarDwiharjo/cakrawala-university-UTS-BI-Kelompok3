@@ -4,7 +4,7 @@
 -- Kelompok 3
 --
 -- SCD Type: Type 2 — harga_satuan dan status aktif DAPAT BERUBAH
---   (produk bisa nonaktif atau berubah harga; histori harga penting
+--   (produk bisa nonaktif atau berubah harga — histori harga penting
 --    untuk rekonsiliasi nilai transaksi historis)
 --
 -- Kolom wajib:
@@ -37,7 +37,7 @@ SELECT
             lead(p.harga_berlaku_dari) OVER (
                 PARTITION BY p.product_id
                 ORDER BY p.harga_berlaku_dari
-            ) - INTERVAL 1 DAY
+            )::DATE - INTERVAL 1 DAY
             AS DATE
         ),
         DATE '9999-12-31'
