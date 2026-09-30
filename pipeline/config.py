@@ -42,7 +42,7 @@ TOPICS = {
                              "hari": "CAST(t.waktu AS DATE) >= DATE '2025-01-01' AND CAST(t.waktu AS DATE) < DATE '2025-07-01'"}},
         },
         "files": ["outlets.csv", "products.csv", "customers.csv", "transactions.csv", "transaction_items.csv"],
-        "fact": "fact_sales_item",
+        "fact": "fact_transaksi_item",
         "grain": "Satu baris = satu item produk pada satu transaksi.",
     },
     "t3": {

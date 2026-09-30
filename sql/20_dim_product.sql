@@ -4,7 +4,7 @@
 -- Kelompok 3
 --
 -- SCD Type: Type 2 — harga_satuan dan status aktif DAPAT BERUBAH
---   (produk bisa nonaktif atau berubah harga; histori harga penting
+--   (produk bisa nonaktif atau berubah harga — histori harga penting
 --    untuk rekonsiliasi nilai transaksi historis)
 --
 -- Kolom wajib:

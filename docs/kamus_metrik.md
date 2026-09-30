@@ -4,7 +4,10 @@
 
 ---
 
-## Metrik 1 — Omzet Harian per Outlet
+> UTS item 5 menilai **satu** metrik lengkap; UAS menilai tiga. Setiap metrik wajib punya berkas SQL
+> di `sql/50_metrics/` — definisi yang tidak bisa dijalankan belum tentu benar.
+
+## Metrik 1 — Omzet Bersih Bulanan per Outlet
 
 | # | Field | Isi |
 |---|---|---|
